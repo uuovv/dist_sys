@@ -1,14 +1,14 @@
+import os
 import psycopg as pg3
 import socket
 import json
 from conf_db import dbname, user, db_host, db_port
 from conf_server import HDRS, server_host, server_port, socket_size
 
+#-------------------------------------------------------------------------------------
 def main():
     create_db(dbname, user, db_host, db_port)
     create_table(dbname, user, db_host, db_port)
-
-#-------------------------------------------------------------------------------------
 
     server = create_server(server_host, server_port)
     try:
