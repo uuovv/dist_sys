@@ -2,27 +2,37 @@ import os
 import psycopg as pg3
 import socket
 import json
-from conf_db import dbname, user, db_host, db_port
-from conf_server import HDRS, server_host, server_port, socket_size
+
+dbname = os.environ['dbname']
+db_user = os.environ['db_user']
+db_host = os.environ['db_host']
+db_port = int(os.environ['db_port'])
+db_password = os.environ['db_password']
+
+HDRS = 'http/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n'
+server_host = os.environ['server_host']
+server_port = int(os.environ['server_port'])
+socket_size = int(os.environ['socket_size'])
 
 #-------------------------------------------------------------------------------------
+
 def main():
-    create_db(dbname, user, db_host, db_port)
-    create_table(dbname, user, db_host, db_port)
+    create_db(dbname, db_user, db_host, db_port, db_password)
+    create_table(dbname, db_user, db_host, db_port, db_password)
 
     server = create_server(server_host, server_port)
     try:
         while True: 
             client_socket, address = server.accept()
             http_num = resive_data(client_socket, socket_size)
-            db_num = get_number(dbname, user, db_host, db_port)
+            db_num = get_number(dbname, db_user, db_host, db_port, db_password)
             
             print('Полученное число: {}; Число в базе: {}'.format(http_num, db_num))
         
             insert_f, content = condition(http_num, db_num)
             
             if insert_f:
-                insert_to_table(http_num, dbname, user, db_host, db_port)
+                insert_to_table(http_num, dbname, db_user, db_host, db_port, db_password)
                 send_data(client_socket, content)
             else:
                 send_data(client_socket, content)
@@ -37,8 +47,9 @@ def main():
 
 #-------------------------------------------------------------------------------------
 
-def create_db(dbname, user, db_host, db_port):
-    with pg3.connect(user=user, host=db_host, port=db_port, autocommit=True) as conn:
+def create_db(dbname, db_user, db_host, db_port, db_password):
+    with pg3.connect(user=db_user, host=db_host, port=db_port, 
+                    password=db_password, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute('''
                     SELECT datname FROM pg_database;
@@ -54,8 +65,9 @@ def create_db(dbname, user, db_host, db_port):
     conn.close()    
 
 
-def create_table(dbname, user, db_host, db_port):
-    with pg3.connect(dbname=dbname, user=user, host=db_host, port=db_port) as conn:
+def create_table(dbname, db_user, db_host, db_port, db_password):
+    with pg3.connect(dbname=dbname, user=db_user, host=db_host, 
+                    port=db_port, password=db_password) as conn:
         with conn.cursor() as cur:
             cur.execute('''
                     CREATE TABLE IF NOT EXISTS nums (
@@ -65,8 +77,9 @@ def create_table(dbname, user, db_host, db_port):
                         ''')            
     conn.close()
 
-def get_number(dbname, user, db_host, db_port):
-    with pg3.connect(dbname=dbname, user=user, host=db_host, port=db_port) as conn:
+def get_number(dbname, db_user, db_host, db_port, db_password):
+    with pg3.connect(dbname=dbname, user=db_user, host=db_host, 
+                    port=db_port, password=db_password) as conn:
         with conn.cursor() as cur:
             cur.execute('''
                     SELECT n1.num
@@ -81,8 +94,9 @@ def get_number(dbname, user, db_host, db_port):
     else:
         return number[0]
 
-def insert_to_table(num, dbname, user, db_host, db_port):
-    with pg3.connect(dbname=dbname, user=user, host=db_host, port=db_port) as conn:
+def insert_to_table(num, dbname, db_user, db_host, db_port, db_password):
+    with pg3.connect(dbname=dbname, user=db_user, host=db_host, 
+                    port=db_port, password=db_password) as conn:
         with conn.cursor() as cur:
             cur.execute('''
                         INSERT INTO nums (num)
@@ -91,6 +105,8 @@ def insert_to_table(num, dbname, user, db_host, db_port):
                         ''', (num,))            
             conn.commit()
     conn.close()
+
+#-------------------------------------------------------------------------------------
 
 def create_server(server_host, server_port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

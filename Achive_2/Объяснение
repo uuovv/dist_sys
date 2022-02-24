@@ -28,4 +28,14 @@
     Пример: curl -d '{"num": 0}' -X POST http://localhost:2000        
     4)В зависимости от числа программа выдаст либо ошибку, либо обработанное число
     - в случае ошибки сервер не запишет число в базу
-
+    
+    *)Предварительно должны быть установлены следующие переменные окружения:
+    export dbname='achive_2'
+    export db_user='postgres'
+    export db_host='localhost' 
+    export db_port='5433'
+    export db_password='achive_2'
+    
+    export server_host='localhost'
+    export server_port='2000'
+    export socket_size='1024'
