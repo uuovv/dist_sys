@@ -1,0 +1,2 @@
+#Environment Variable for DbServer
+POSTGRES_PASSWORD=postgres

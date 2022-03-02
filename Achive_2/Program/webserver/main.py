@@ -3,36 +3,36 @@ import psycopg as pg3
 import socket
 import json
 
-dbname = os.environ['dbname']
-db_user = os.environ['db_user']
-db_host = os.environ['db_host']
-db_port = int(os.environ['db_port'])
-db_password = os.environ['db_password']
+DBNAME = os.environ['DBNAME']
+DB_USER = os.environ['DB_USER']
+DB_HOST = os.environ['DB_HOST']
+DB_PORT = os.environ['DB_PORT']
+DB_PASSWORD = os.environ['DB_PASSWORD']
 
 HDRS = 'http/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n'
-server_host = os.environ['server_host']
-server_port = int(os.environ['server_port'])
-socket_size = int(os.environ['socket_size'])
+SERVER_HOST = os.environ['SERVER_HOST']
+SERVER_PORT = int(os.environ['SERVER_PORT'])
+SOCKET_SIZE = int(os.environ['SOCKET_SIZE'])
 
 #-------------------------------------------------------------------------------------
 
 def main():
-    create_db(dbname, db_user, db_host, db_port, db_password)
-    create_table(dbname, db_user, db_host, db_port, db_password)
+    create_db(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD)
+    create_table(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD)
 
-    server = create_server(server_host, server_port)
+    server = create_server(SERVER_HOST, SERVER_PORT)
     try:
         while True: 
             client_socket, address = server.accept()
-            http_num = resive_data(client_socket, socket_size)
-            db_num = get_number(dbname, db_user, db_host, db_port, db_password)
+            http_num = resive_data(client_socket, SOCKET_SIZE)
+            db_num = get_number(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD)
             
             print('Полученное число: {}; Число в базе: {}'.format(http_num, db_num))
         
             insert_f, content = condition(http_num, db_num)
             
             if insert_f:
-                insert_to_table(http_num, dbname, db_user, db_host, db_port, db_password)
+                insert_to_table(http_num, DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD)
                 send_data(client_socket, content)
             else:
                 send_data(client_socket, content)
@@ -40,16 +40,16 @@ def main():
             print(content)
     except KeyboardInterrupt:
         print('Сервер отключен по вашей просьбе.')
-    except:
-        print('Произошла неизвестная ошибка.')
+    except Exception as e: 
+        print('Произошла ошибка.\n{}'.format(e))
     finally:
         server.close()    
 
 #-------------------------------------------------------------------------------------
 
-def create_db(dbname, db_user, db_host, db_port, db_password):
-    with pg3.connect(user=db_user, host=db_host, port=db_port, 
-                    password=db_password, autocommit=True) as conn:
+def create_db(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD):
+    with pg3.connect(dbname=DBNAME, user=DB_USER, host=DB_HOST, port=DB_PORT, 
+                    password=DB_PASSWORD, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute('''
                     SELECT datname FROM pg_database;
@@ -58,33 +58,33 @@ def create_db(dbname, db_user, db_host, db_port, db_password):
             db_list = cur.fetchall()
             conn.commit()
     
-            if (dbname,) not in db_list:
+            if (DBNAME,) not in db_list:
                 cur.execute('''
                     CREATE DATABASE achive_2;
                             ''')
     conn.close()    
 
 
-def create_table(dbname, db_user, db_host, db_port, db_password):
-    with pg3.connect(dbname=dbname, user=db_user, host=db_host, 
-                    port=db_port, password=db_password) as conn:
+def create_table(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD):
+    with pg3.connect(dbname=DBNAME, user=DB_USER, host=DB_HOST, 
+                    port=DB_PORT, password=DB_PASSWORD) as conn:
         with conn.cursor() as cur:
             cur.execute('''
-                    CREATE TABLE IF NOT EXISTS nums (
+                    CREATE TABLE IF NOT EXISTS numbers (
                         id serial NOT NULL PRIMARY KEY,
                         num int NOT NULL
                         );
                         ''')            
     conn.close()
 
-def get_number(dbname, db_user, db_host, db_port, db_password):
-    with pg3.connect(dbname=dbname, user=db_user, host=db_host, 
-                    port=db_port, password=db_password) as conn:
+def get_number(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD):
+    with pg3.connect(dbname=DBNAME, user=DB_USER, host=DB_HOST, 
+                    port=DB_PORT, password=DB_PASSWORD) as conn:
         with conn.cursor() as cur:
             cur.execute('''
                     SELECT n1.num
-                    FROM nums n1
-                    WHERE n1.id = (SELECT MAX(n2.id) FROM nums n2);
+                    FROM numbers n1
+                    WHERE n1.id = (SELECT MAX(n2.id) FROM numbers n2);
                         ''' )            
             number = cur.fetchone()
     conn.close()
@@ -94,12 +94,12 @@ def get_number(dbname, db_user, db_host, db_port, db_password):
     else:
         return number[0]
 
-def insert_to_table(num, dbname, db_user, db_host, db_port, db_password):
-    with pg3.connect(dbname=dbname, user=db_user, host=db_host, 
-                    port=db_port, password=db_password) as conn:
+def insert_to_table(num, DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD):
+    with pg3.connect(dbname=DBNAME, user=DB_USER, host=DB_HOST, 
+                    port=DB_PORT, password=DB_PASSWORD) as conn:
         with conn.cursor() as cur:
             cur.execute('''
-                        INSERT INTO nums (num)
+                        INSERT INTO numbers (num)
                         VALUES
                         (%s);
                         ''', (num,))            
@@ -108,14 +108,14 @@ def insert_to_table(num, dbname, db_user, db_host, db_port, db_password):
 
 #-------------------------------------------------------------------------------------
 
-def create_server(server_host, server_port):
+def create_server(SERVER_HOST, SERVER_PORT):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((server_host, server_port))
+    server.bind((SERVER_HOST, SERVER_PORT))
     server.listen(5)
     return server
 
-def resive_data(client_socket, socket_size):
-    data = client_socket.recv(socket_size).decode('utf-8').split('\r\n')[-1]
+def resive_data(client_socket, SOCKET_SIZE):
+    data = client_socket.recv(SOCKET_SIZE).decode('utf-8').split('\r\n')[-1]
     num = json.loads(data)['num']
     return num
 
