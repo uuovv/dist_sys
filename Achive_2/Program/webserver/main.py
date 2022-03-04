@@ -31,7 +31,7 @@ def main():
             condition = check_condition(http_num, DBNAME, DB_USER, 
                                         DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
             
-            print('http_num: {};'.format(http_num))
+            print('Received number: {};'.format(http_num))
         
             insert_f, content = condition_processing(http_num, condition)
             
@@ -135,7 +135,7 @@ def send_data(client_socket, content):
     client_socket.shutdown(socket.SHUT_WR)
 
 def condition_processing(http_num, condition):
-    if (condition == 0 and http_num >= 0):
+    if ((condition == 0 or condition == None) and http_num >= 0):
         insert_f = True
         content = 'Result of processing the http_num: {}\n\r'.format(http_num+1)
     else:
