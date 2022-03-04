@@ -1,0 +1,27 @@
+version: '3'
+services:
+    db:
+        image: uuovv/dbserver
+        expose:
+            - "5432"
+        environment:
+            - POSTGRES_PASSWORD=postgres
+    web:
+        image: uuovv/webserver
+        ports:
+            - "2000:2000"
+        environment:
+            - DBNAME=achive_2
+            - DB_USER=web_server
+            - DB_HOST=db
+            - DB_PORT=5432
+            - DB_PASSWORD=achive_2
+                      
+            - SERVER_HOST=web
+            - SERVER_PORT=2000
+            - SOCKET_SIZE=1024
+
+            - WAIT_S=5
+        depends_on:
+            db:
+                condition: service_started
