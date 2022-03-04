@@ -20,9 +20,6 @@ WAIT_S = int(os.environ['WAIT_S'])
 #-------------------------------------------------------------------------------------
 
 def main():
-    create_db(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
-    create_table(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
-
     server = create_server(SERVER_HOST, SERVER_PORT)
     try:
         while True: 
@@ -51,34 +48,6 @@ def main():
         server.close()    
 
 #-------------------------------------------------------------------------------------
-
-def create_db(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S):
-    conn = wait_until_connect(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
-    with conn.cursor() as cur:
-        cur.execute('''
-            SELECT datname FROM pg_database;
-                    ''')
-    
-        db_list = cur.fetchall()
-        conn.commit()
-    
-        if (DBNAME,) not in db_list:
-            cur.execute('''
-                CREATE DATABASE achive_2;
-                        ''')
-    conn.close()    
-
-
-def create_table(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S):
-    conn = wait_until_connect(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
-    with conn.cursor() as cur:
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS numbers (
-                id serial NOT NULL PRIMARY KEY,
-                num int NOT NULL
-                );
-                    ''')            
-    conn.close()
 
 def check_condition(http_num, DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S):
     conn = wait_until_connect(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
