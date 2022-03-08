@@ -22,6 +22,3 @@ services:
             - SOCKET_SIZE=1024
 
             - WAIT_S=5
-        depends_on:
-            db:
-                condition: service_started

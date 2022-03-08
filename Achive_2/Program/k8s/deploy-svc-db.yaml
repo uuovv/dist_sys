@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-db
+  namespace: ayukarnaukhov
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-db
+  template:
+    metadata:
+      labels:
+        app: k8s-db
+    spec:
+      containers:
+      - name: k8s-db
+        image: uuovv/dbserver
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 5432
+        env:
+          - name: POSTGRES_PASSWORD
+            value: postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-db
+  namespace: ayukarnaukhov
+spec:
+  selector:
+    app: k8s-db
+  ports:
+  - port: 5432
+    targetPort: 5432

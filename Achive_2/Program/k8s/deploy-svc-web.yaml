@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-web
+  namespace: ayukarnaukhov
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-web
+  template:
+    metadata:
+      labels:
+        app: k8s-web
+    spec:
+      containers:
+      - name: k8s-web
+        image: uuovv/webserver
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 2000
+        env:
+        - name: DBNAME
+          value: achive_2
+        - name: DB_USER
+          value: web_server
+        - name: DB_HOST
+          value: k8s-db
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_PASSWORD
+          value: achive_2
+        - name: SERVER_HOST
+          value: "0.0.0.0"
+        - name: SERVER_PORT
+          value: "2000"
+        - name: SOCKET_SIZE
+          value: "1024"
+        - name: WAIT_S
+          value: "5"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-web
+  namespace: ayukarnaukhov
+spec:
+  selector:
+    app: k8s-web
+  ports:
+  - port: 2000
+    targetPort: 2000
