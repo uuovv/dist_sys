@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: k8s-web
-  namespace: ayukarnaukhov
+  namespace: uuovv
 spec:
-  replicas: 1
+  replicas: 4
   selector:
     matchLabels:
       app: k8s-web
@@ -46,10 +46,35 @@ apiVersion: v1
 kind: Service
 metadata:
   name: k8s-web
-  namespace: ayukarnaukhov
+  namespace: uuovv
 spec:
   selector:
     app: k8s-web
   ports:
-  - port: 2000
+  - protocol: TCP
+    name: http
+    port: 2000
     targetPort: 2000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: k8s-web
+  namespace: uuovv
+  labels:
+    name: k8s-web
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  #ingressClassName: haproxy
+  rules:
+  - host: uuovv.com
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: k8s-web
+            port: 
+              number: 2000

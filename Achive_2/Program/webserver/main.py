@@ -1,4 +1,4 @@
-import  os
+import os
 import psycopg as pg3
 import socket
 import json
@@ -10,7 +10,7 @@ DB_HOST = os.environ['DB_HOST']
 DB_PORT = os.environ['DB_PORT']
 DB_PASSWORD = os.environ['DB_PASSWORD']
 
-HDRS = 'http/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n'
+HDRS = 'http/1.1 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n'
 SERVER_HOST = os.environ['SERVER_HOST']
 SERVER_PORT = int(os.environ['SERVER_PORT'])
 SOCKET_SIZE = int(os.environ['SOCKET_SIZE'])
@@ -20,8 +20,8 @@ WAIT_S = int(os.environ['WAIT_S'])
 #-------------------------------------------------------------------------------------
 
 def main():
-    server = create_server(SERVER_HOST, SERVER_PORT)
     try:
+        server = create_server(SERVER_HOST, SERVER_PORT)
         while True: 
             client_socket, address = server.accept()
             http_num = resive_data(client_socket, SOCKET_SIZE)
@@ -45,7 +45,7 @@ def main():
     except Exception as e: 
         print('Exception\n{}'.format(e))
     finally:
-        server.close()    
+        server.close()
 
 #-------------------------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ def check_condition(http_num, DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WA
                     '''.format(http_num, http_num+1))            
         condition = cur.fetchone()
     conn.close()
-
+    print('check_condition OK')
     return condition[0]
 
 def insert_to_table(num, DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S):
@@ -75,15 +75,18 @@ def insert_to_table(num, DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
                     ''', (num,))            
         conn.commit()
     conn.close()
+    print('insert_to_table OK')
 
 def wait_until_connect(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S):
     while True:
         try:
             conn = pg3.connect(dbname=DBNAME, user=DB_USER, host=DB_HOST, 
                             port=DB_PORT, password=DB_PASSWORD)
+            print('wait_until_connect OK')
             break
         except pg3.errors.OperationalError: 
             sleep(WAIT_S)
+            print('wait_until_connect NOT OK')
     return conn
     
 #-------------------------------------------------------------------------------------
@@ -92,21 +95,29 @@ def create_server(SERVER_HOST, SERVER_PORT):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((SERVER_HOST, SERVER_PORT))
     server.listen(5)
+    print('create_server OK')
     return server
 
 def resive_data(client_socket, SOCKET_SIZE):
     data = client_socket.recv(SOCKET_SIZE).decode('utf-8').split('\r\n')[-1]
-    num = json.loads(data)['num']
+    num = int(json.loads(data)['num'])
+    print('resive_data OK')
     return num
 
 def send_data(client_socket, content):
-    client_socket.send(HDRS.encode('utf-8') + content.encode('utf-8'))
-    client_socket.shutdown(socket.SHUT_WR)
+    try:
+        client_socket.send(HDRS.encode('utf-8') + content.encode('utf-8'))
+        client_socket.shutdown(socket.SHUT_WR)
+        print('send_data OK')
+    except OSError as e:
+        print('Exception\r\n{}'.format(e.args[1]))
+    finally:
+        client_socket.close()
 
 def condition_processing(http_num, condition):
     if ((condition == 0 or condition == None) and http_num >= 0):
         insert_f = True
-        content = 'Result of processing the http_num: {}\n\r'.format(http_num+1)
+        content = '{}\r\n'.format({"num": http_num+1})
     else:
         insert_f = False
         if http_num < 0:
@@ -115,7 +126,7 @@ def condition_processing(http_num, condition):
             content = 'Error: The number has already been processed.\n\r'
         elif condition == 2:
             content = 'Error: The number is less than the processed number by 1.\n\r'
-    
+    print('condition_processing OK')
     return (insert_f, content)
 
 #-------------------------------------------------------------------------------------
