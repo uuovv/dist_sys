@@ -53,7 +53,7 @@ spec:
   ports:
   - protocol: TCP
     name: http
-    port: 2000
+    port: 8080
     targetPort: 2000
 ---
 apiVersion: networking.k8s.io/v1
@@ -63,12 +63,10 @@ metadata:
   namespace: uuovv
   labels:
     name: k8s-web
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  #ingressClassName: haproxy
+  ingressClassName: haproxy
   rules:
-  - host: uuovv.com
+  - host: ayukarnaukhov.hse.dc
     http:
       paths:
       - pathType: Prefix
@@ -77,4 +75,4 @@ spec:
           service:
             name: k8s-web
             port: 
-              number: 2000
+              number: 8080
