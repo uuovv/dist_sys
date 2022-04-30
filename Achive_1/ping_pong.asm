@@ -6,8 +6,8 @@
 .equ freq = 8000000
 .equ UBRR_val = freq/(16*BAUD)-1
 ;Настройка интревалов Таймеров
-.equ TIMER1_INTERVAL = 256/4
-.equ TIMER2_INTERVAL = 0
+.equ TIMER1_INTERVAL = 235
+.equ TIMER2_INTERVAL = 215
 ;Регистры для использования
 .def sys = r16
 .def letter_send = r17
@@ -46,14 +46,14 @@ TIMS_set:
     ;Начальное значение Timer2 (Интервал)
     ldi sys, TIMER2_INTERVAL
     out TCNT2, sys
-    ;Запуск Timer2 с делителем (256)
-    ldi sys, 0x4
+    ;Запуск Timer0 с делителем (8)
+    ldi sys, 0x2
     out TCCR0, sys
-    ;Запуск Timer2 с делителем (256)
-    ldi sys, 0x6
+    ;Запуск Timer2 с делителем (8)
+    ldi sys, 0x5
     out TCCR2, sys
     ;Разрешить прерывания по переполнению Таймеров
-    ldi sys, 0x41
+    ldi sys, 0x101
     out TIMSK, sys
     ret
 
@@ -74,7 +74,7 @@ USART_init:
 ;Отправка первого сообщения
 START_SEND_WORD1:
     ;Установить время срабатывания (Интервал)
-    ldi T0_R, TIMER1_INTERVAL
+    ldi T0_R, TIMER2_INTERVAL
     out TCNT0, T0_R
 
     ldi ZH, high(2*word1)
