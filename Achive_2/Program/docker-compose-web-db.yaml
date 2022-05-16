@@ -19,6 +19,5 @@ services:
                       
             - SERVER_HOST=web
             - SERVER_PORT=2000
-            - SOCKET_SIZE=1024
 
             - WAIT_S=5

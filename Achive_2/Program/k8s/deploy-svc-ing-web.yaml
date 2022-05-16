@@ -37,8 +37,6 @@ spec:
           value: "0.0.0.0"
         - name: SERVER_PORT
           value: "2000"
-        - name: SOCKET_SIZE
-          value: "1024"
         - name: WAIT_S
           value: "5"
 ---
