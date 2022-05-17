@@ -36,7 +36,7 @@ def main():
 def resive_data():
     if request.method == 'POST':
         data = request.get_json()
-    num = data['num']
+    num = int(data['num'])
 
     logging.debug(f'resive_data: OK')
     logging.debug(f'data: {data}')
