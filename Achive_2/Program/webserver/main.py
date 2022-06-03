@@ -21,13 +21,15 @@ app = Flask(__name__)
 @app.route('/', methods=['POST', 'GET'])
 def main():
     http_num = resive_data()
-    condition = check_condition(http_num, DBNAME, DB_USER, 
-                                DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
+    conn = wait_until_connect(DBNAME, DB_USER, DB_HOST, 
+                                DB_PORT, DB_PASSWORD, WAIT_S)
+    condition = check_condition(conn, http_num)
     insert_f, content = condition_processing(http_num, condition)
 
     if insert_f:
-        insert_to_table(http_num, DBNAME, DB_USER, 
-                        DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
+        insert_to_table(conn, http_num)
+    
+    conn.close()
 
     return content
 
@@ -66,36 +68,32 @@ def condition_processing(http_num, condition):
 
 #-------------------------------------------------------------------------------------
 
-def check_condition(http_num, DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S):
+def check_condition(conn, http_num):
     if (http_num != None and http_num >= 0):
-        conn = wait_until_connect(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
         with conn.cursor() as cur:
             cur.execute('''
                 SELECT SUM(
-                    CASE WHEN num={0} THEN 1
-                        WHEN num={1} THEN 2
-                        ELSE 0
-                        END)
-                    FROM numbers;
+                CASE WHEN num={0} THEN 1
+                    WHEN num={1} THEN 2
+                    ELSE 0
+                    END)
+                FROM numbers;
                         '''.format(http_num, http_num+1))            
             condition = cur.fetchone()
-        conn.close()
         logging.debug('check_condition: OK')
         return condition[0]
     else:
         logging.debug('check_condition: OK')
         return None
 
-def insert_to_table(num, DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S):
-    conn = wait_until_connect(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S)
+def insert_to_table(conn, num):
     with conn.cursor() as cur:
         cur.execute('''
-            INSERT INTO numbers (num)
-            VALUES
-            (%s);
+                    INSERT INTO numbers (num)
+                    VALUES
+                    (%s);
                     ''', (num,))            
         conn.commit()
-    conn.close()
     logging.debug('insert_to_table: OK')
 
 def wait_until_connect(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S):
