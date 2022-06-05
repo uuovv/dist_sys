@@ -31,6 +31,8 @@ def main():
     
     conn.close()
 
+    logging.debug(f'end of request.\r\n')
+
     return content
 
 #-------------------------------------------------------------------------------------
@@ -46,7 +48,7 @@ def resive_data():
     return num
 
 def condition_processing(http_num, condition):
-    if ((condition == 0 or condition == None) and (http_num != None and http_num >= 0)):
+    if ((condition == None) and (http_num != None and http_num >= 0)):
         insert_f = True
         content = jsonify({'num': http_num+1})
     else:
@@ -60,9 +62,14 @@ def condition_processing(http_num, condition):
         elif condition == 2:
             content = 'Error: The number is less than the processed number by 1.\r\n'
 
-    logging.debug('condition_processing: OK')
+    logging.debug(f'condition_processing: OK')
     logging.debug(f'insert_f: {insert_f}')
-    logging.debug(f'content: {content}')
+
+    content_log = content
+    if not insert_f:
+        content_log = content[:-2]
+
+    logging.debug(f'content: {content_log}')
 
     return (insert_f, content)
 
@@ -75,7 +82,6 @@ def check_condition(conn, http_num):
                 SELECT SUM(
                 CASE WHEN num={0} THEN 1
                     WHEN num={1} THEN 2
-                    ELSE 0
                     END)
                 FROM numbers;
                         '''.format(http_num, http_num+1))            
