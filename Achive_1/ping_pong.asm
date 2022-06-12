@@ -53,7 +53,7 @@ TIMS_set:
     ldi sys, 0x5
     out TCCR2, sys
     ;Разрешить прерывания по переполнению Таймеров
-    ldi sys, 0x101
+    ldi sys, 0x41
     out TIMSK, sys
     ret
 
