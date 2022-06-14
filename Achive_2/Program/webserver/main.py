@@ -20,20 +20,26 @@ app = Flask(__name__)
 
 @app.route('/', methods=['POST', 'GET'])
 def main():
-    http_num = resive_data()
-    conn = wait_until_connect(DBNAME, DB_USER, DB_HOST, 
+    try:
+        http_num = resive_data()
+        conn = wait_until_connect(DBNAME, DB_USER, DB_HOST,
                                 DB_PORT, DB_PASSWORD, WAIT_S)
-    condition = check_condition(conn, http_num)
-    insert_f, content = condition_processing(http_num, condition)
+        condition = check_condition(conn, http_num)
+        insert_f, content = condition_processing(http_num, condition)
 
-    if insert_f:
-        insert_to_table(conn, http_num)
-    
-    conn.close()
+        if insert_f:
+            insert_to_table(conn, http_num)
 
-    logging.debug(f'end of request.\r\n')
-
-    return content
+        conn.close()
+        logging.debug(f'end of request.\r\n')
+        return content
+    except (Exception, pg3.errors.ConnectionTimeout) as err:
+        logging.debug(f'Error: {err}')
+        return f"Error: {err}\r\n"
+    finally:
+        if "conn" in locals():
+            if conn is not None:
+                conn.close()
 
 #-------------------------------------------------------------------------------------
 
@@ -106,7 +112,7 @@ def wait_until_connect(DBNAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, WAIT_S):
     while True:
         try:
             conn = pg3.connect(dbname=DBNAME, user=DB_USER, host=DB_HOST, 
-                            port=DB_PORT, password=DB_PASSWORD)
+                            port=DB_PORT, password=DB_PASSWORD, connect_timeout=WAIT_S)
             logging.debug('wait_until_connect: OK')
             break
         except pg3.errors.OperationalError: 
